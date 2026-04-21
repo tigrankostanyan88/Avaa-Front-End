@@ -1,0 +1,20 @@
+'use client'
+
+export { OverviewTab } from './overview/OverviewTab'
+export { UsersTab } from './users/UsersTab'
+export { SuspendedUsersTab } from './suspended/SuspendedUsersTab'
+export { EnrollmentsTab } from './enrollments/EnrollmentsTab'
+export { CourseRegistrationsTab } from './course-registrations/CourseRegistrationsTab'
+export { ContactMessagesTab } from './contact/ContactMessagesTab'
+export { CoursesTab } from './courses/CoursesTab'
+export { CommentsTab } from './comments/CommentsTab'
+export { FaqTab } from './faq/FaqTab'
+export { HeroContentTab } from './hero-content/HeroContentTab'
+export { SettingsTab } from './settings/SettingsTab'
+export { StudentCoursesTab } from './student-courses/StudentCoursesTab'
+
+// Nested folders (already have their own index.ts)
+export { PaymentsTab } from './payments'
+export { BankCardsTab } from './bankcards'
+export { InstructorTab } from './instructor'
+export { ModulesTab } from './modules'

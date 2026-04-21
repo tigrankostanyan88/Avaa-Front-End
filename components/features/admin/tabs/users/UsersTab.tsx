@@ -1,0 +1,159 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import { Search, Edit, Trash2, User as UserIcon } from 'lucide-react'
+import { getUserAvatarUrl } from '@/lib/utils/avatar'
+import type { User } from '@/components/features/admin/types'
+import { ConfirmationModal } from '@/components/shared'
+
+interface UsersTabProps {
+  users: User[]
+  isUsersLoading: boolean
+  userSearch: string
+  setUserSearch: (value: string) => void
+  getUserPaymentStatus: (userId: number | string) => boolean
+  onEdit: (user: User) => void
+  onDelete: (id: string) => void
+}
+
+export function UsersTab({
+  users,
+  isUsersLoading,
+  userSearch,
+  setUserSearch,
+  getUserPaymentStatus,
+  onEdit,
+  onDelete
+}: UsersTabProps) {
+  const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user)
+    setShowConfirmDelete(String(user.id))
+  }
+
+  const confirmDelete = () => {
+    if (showConfirmDelete) {
+      onDelete(showConfirmDelete)
+      setShowConfirmDelete(null)
+      setUserToDelete(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setShowConfirmDelete(null)
+    setUserToDelete(null)
+  }
+  return (
+    <div className="space-y-6">
+      <ConfirmationModal
+        isOpen={!!showConfirmDelete}
+        title="Ջնջե՞լ օգտատիրոջը"
+        message={`${userToDelete?.name || ''} օգտատերը կտեղափոխվի «Ժամանակավոր կասեցվածներ» բաժին։ Օգտատերը չի կարողանա մուտք գործել իր պրոֆիլը, քանի դեռ ադմինը չի վերականգնի նրան։`}
+        variant="warning"
+        icon="user"
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        confirmText="Ջնջել"
+      />
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-slate-900">Օգտվողներ</h2>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Որոնել..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500"
+          />
+        </div>
+      </div>
+
+      {isUsersLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+        </div>
+      ) : users.length > 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th className="px-4 py-4 text-left text-sm font-medium text-slate-700">Նկար</th>
+                <th className="px-4 py-4 text-left text-sm font-medium text-slate-700">Անուն</th>
+                <th className="px-4 py-4 text-left text-sm font-medium text-slate-700">Էլ. փոստ</th>
+                <th className="px-4 py-4 text-left text-sm font-medium text-slate-700">Դեր</th>
+                <th className="px-4 py-4 text-left text-sm font-medium text-slate-700">Վճարում</th>
+                <th className="px-4 py-4 text-right text-sm font-medium text-slate-700">Գործողություններ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.map((user) => {
+                const avatarUrl = getUserAvatarUrl(user)
+                return (
+                <tr key={user.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-4">
+                    <div className="relative w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                      {avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          alt={`${user.firstName} ${user.lastName}`}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      ) : (
+                        <UserIcon className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-slate-900">{user.name}</p>
+                  </td>
+                  <td className="px-4 py-4 text-slate-600">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 rounded-lg text-xs font-medium ${
+                      user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {user.role === 'admin' ? 'Ադմին' : 'Ուսանող'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
+                      getUserPaymentStatus(String(user.id))
+                        ? 'bg-emerald-100 text-emerald-700' 
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {getUserPaymentStatus(String(user.id)) ? 'Վճարված' : 'Չվճարված'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => onEdit(user)}
+                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4 text-slate-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(user)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )})}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-slate-500 text-center py-12">Օգտվողներ չկան</p>
+      )}
+    </div>
+  )
+}

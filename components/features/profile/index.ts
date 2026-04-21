@@ -1,0 +1,20 @@
+export { ProfileSidebar } from './ProfileSidebar'
+export { ProBanner } from './ProBanner'
+export { Toast } from './Toast'
+
+export { AvatarCropModal } from './modals/AvatarCropModal'
+export { CommentModal } from './modals/CommentModal'
+export { PasswordModal } from './modals/PasswordModal'
+export { PaymentModal } from './modals/PaymentModal'
+export { TransactionModal } from './modals/TransactionModal'
+
+export { ProfileTab } from './tabs/profile'
+export { CoursesTab } from './tabs/CoursesTab'
+export { PaymentsTab } from './tabs/PaymentsTab'
+export { PersonalDataTab } from './tabs/PersonalDataTab'
+export { CommentsTab } from './tabs/CommentsTab'
+export { SettingsTab } from './tabs/SettingsTab'
+
+export { useProfileData, type ProfileUser } from './hooks/useProfileData'
+export { useProfileSettings } from './hooks/useProfileSettings'
+export { useReviews } from './hooks/useReviews'
