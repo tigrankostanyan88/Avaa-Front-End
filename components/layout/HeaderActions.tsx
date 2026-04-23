@@ -35,10 +35,12 @@ function getAvatarUrl(user: UserWithAvatar | null): string {
   
   const files = Array.isArray(user.files) ? user.files : []
   const fileObj = files.find((x) => x.name_used === 'user_img') || files[0]
-  if (!fileObj) return ''
+  if (!fileObj || !fileObj.name || !fileObj.ext) return ''
   
   const table = fileObj.table_name || 'users'
-  return `/images/${table}/large/${fileObj.name}.${fileObj.ext}`
+  // ext already includes the leading dot from backend (e.g., '.jpg')
+  const extWithDot = fileObj.ext.startsWith('.') ? fileObj.ext : `.${fileObj.ext}`
+  return `/images/${table}/large/${fileObj.name}${extWithDot}`
 }
 
 export function HeaderActions({ onOpenLoginModal, onOpenCourseModal, mobile, onMobileLinkClick }: HeaderActionsProps) {
@@ -129,7 +131,8 @@ export function HeaderActions({ onOpenLoginModal, onOpenCourseModal, mobile, onM
     )
   }
 
-  // Desktop view
+  // Desktop view - show skeleton until auth state is confirmed
+  // This prevents showing "Login" button when user might actually be logged in
   if (!isLoaded) {
     return (
       <div className="flex items-center gap-3 h-10">
@@ -184,6 +187,7 @@ export function HeaderActions({ onOpenLoginModal, onOpenCourseModal, mobile, onM
     )
   }
 
+  // Not logged in - show login and register buttons
   return (
     <div className="flex items-center gap-4 h-10">
       <button
