@@ -60,7 +60,7 @@
   "devDependencies": {
     "@playwright/test": "^1.42.0",
     "@testing-library/jest-dom": "^6.4.0",
-    "@testing-library/react": "^14.2.0",
+    "@testing-library/react": "^15.0.7",
     "@testing-library/user-event": "^14.5.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.13.14",
@@ -77,4 +77,3 @@
     "typescript": "5.6.3"
   }
 }
-
