@@ -35,9 +35,6 @@ const nextConfig = {
   compiler: {
     styledComponents: false,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
