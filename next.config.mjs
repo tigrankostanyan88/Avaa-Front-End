@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3300').replace(/\/+$/, '')
 const apiOrigin = /^https?:\/\//.test(apiBase) ? apiBase.replace(/\/api\/?$/, '') : apiBase
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -17,22 +18,23 @@ const nextConfig = {
         port: '3300',
         pathname: '/api/images/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.savaa.am',
+        pathname: '/**', 
+      },
     ],
-    unoptimized: process.env.NODE_ENV === 'development',
+    unoptimized: true, 
   },
   compiler: {
     styledComponents: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,  // TEMP: Allow console statements for deployment
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: false,     // STRICT: Enforce type checking
+    ignoreBuildErrors: false,
   },
-  experimental: {
-    typedRoutes: false,
-  },
-  // Optimize for faster navigation
   poweredByHeader: false,
   compress: true,
   async rewrites() {
