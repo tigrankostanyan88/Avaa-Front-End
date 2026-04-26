@@ -1,0 +1,214 @@
+'use client'
+
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
+import { User as UserIcon, Settings, LayoutDashboard, Wallet, MessageSquare, FileText, BookOpen, type LucideIcon } from 'lucide-react'
+ 
+import { useState, useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { Footer } from '@/components/layout'
+import { ProfileSidebar, ProBanner, Toast } from '@/components/features/profile'
+import { PaymentModal, PasswordModal, TransactionModal } from '@/components/features/profile'
+import { ProfileTab, CoursesTab, PaymentsTab, SettingsTab, CommentsTab, PersonalDataTab } from '@/components/features/profile'
+import { useProfileData } from '@/components/features/profile/hooks/useProfileData'
+import type { ProfileUser } from '@/components/features/profile/hooks/useProfileData'
+import { useProfileSettings } from '@/components/features/profile/hooks/useProfileSettings'
+import { useReviews } from '@/components/features/profile/hooks/useReviews'
+import api from '@/lib/api'
+
+interface SidebarLink {
+  id: string
+  label: string
+  icon: LucideIcon
+  count?: number
+  href?: string
+}
+
+interface Transaction {
+  id: string
+  title: string
+  date: string
+  status: 'completed' | 'pending'
+  price: string
+  type: 'deposit' | 'withdraw'
+}
+
+export default function ProfilePage() {
+  const { user: authUser, isLoaded, logout, setUser: setAuthUser } = useAuth()
+  const router = useRouter()
+
+  const { user, setUser, isLoadingData, myReview, setMyReview, myCourses, myPayments, stats } = useProfileData({ authUser: authUser as ProfileUser | null, isLoaded })
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isLoadingData && !user && !authUser) {
+      router.replace('/')
+    }
+  }, [isLoaded, isLoadingData, user, authUser, router])
+
+  const [activeTab, setActiveTab] = useState('profile')
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    passwordCurrent: '',
+    password: '',
+    passwordConfirm: ''
+  })
+  
+  const [totalCoursesCount, setTotalCoursesCount] = useState(0)
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const { isUpdating, handleUpdateProfile, handleAvatarUpload, handleUpdatePassword } = useProfileSettings({
+    passwordData,
+    setPasswordData,
+    setShowPasswordModal,
+    setIsUploadingAvatar,
+    setAvatarPreview,
+    setUser,
+    setAuthUser,
+    showToast
+  })
+
+  const { reviewForm, setReviewForm, isReviewSubmitting, handleEditReview, handleSubmitReviewUpdate, handleSubmitReviewCreate } = useReviews({
+    myReview,
+    setMyReview,
+    showToast
+  })
+
+  useEffect(() => {
+    const fetchTotalCourses = async () => {
+      try {
+        const res = await api.get('/api/v1/courses')
+        const coursesData = Array.isArray(res.data?.data) ? res.data.data : (res.data?.data?.courses || res.data?.courses || [])
+        setTotalCoursesCount(coursesData.length)
+      } catch {
+        setTotalCoursesCount(0)
+      }
+    }
+    fetchTotalCourses()
+  }, [])
+
+  const currentUser = user || (authUser as ProfileUser | null);
+  const isReady = isLoaded && currentUser;
+
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+      </div>
+    )
+  }
+
+  const allSidebarLinks: SidebarLink[] = [
+    { id: 'profile', label: 'Պրոֆիլ', icon: UserIcon },
+    { id: 'courses', label: 'Իմ դասընթացները', icon: BookOpen, count: myCourses?.length || 0 },
+    { id: 'personal', label: 'Անձնական տվյալներ', icon: FileText },
+    { id: 'comments', label: 'Մեկնաբանություններ', icon: MessageSquare },
+    { id: 'payments', label: 'Վճարումներ', icon: Wallet },
+    { id: 'settings', label: 'Կարգավորումներ', icon: Settings },
+  ]
+
+  const sidebarLinks: SidebarLink[] = currentUser?.role === 'admin' 
+    ? [
+        { id: 'profile', label: 'Պրոֆիլ', icon: UserIcon },
+        { id: 'dashboard', label: 'Վահանակ', icon: LayoutDashboard, href: '/dashboard' },
+        { id: 'personal', label: 'Անձնական տվյալներ', icon: FileText },
+        { id: 'settings', label: 'Կարգավորումներ', icon: Settings },
+      ]
+    : allSidebarLinks
+
+  return (
+    <>
+      <div className="min-h-screen">
+        <PaymentModal open={showPaymentModal} onClose={() => setShowPaymentModal(false)} />
+
+        <main className="container max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 sm:pb-16">
+          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr] gap-4 sm:gap-6 lg:gap-8 mt-[60px] sm:mt-[100px] items-start min-w-0">
+            
+            <ProfileSidebar
+              user={currentUser}
+              activeTab={activeTab}
+              isUploadingAvatar={isUploadingAvatar}
+              avatarPreview={avatarPreview}
+              sidebarLinks={sidebarLinks}
+              onTabChange={(t) => setActiveTab(t)}
+              onAvatarUpload={handleAvatarUpload}
+              onLogout={logout}
+            />
+
+          <div className="space-y-6 min-w-0 w-full">
+            {currentUser?.role !== 'admin' && (
+              <ProBanner user={currentUser} myCourses={myCourses} isLoading={isLoadingData} />
+            )}
+
+            <AnimatePresence mode="wait">
+              {activeTab === 'profile' && (
+                <ProfileTab
+                  stats={stats}
+                  isLoadingData={isLoadingData}
+                  myCourses={myCourses}
+                  myPayments={myPayments}
+                  onViewAllCourses={() => setActiveTab('courses')}
+                />
+              )}
+
+              {activeTab === 'personal' && (
+                <PersonalDataTab 
+                  user={currentUser} 
+                  myCoursesCount={myCourses?.length || 0}
+                  totalCoursesCount={totalCoursesCount}
+                  isLoadingData={isLoadingData}
+                />
+              )}
+
+              {activeTab === 'courses' && (
+                <CoursesTab isLoadingData={isLoadingData} myCourses={myCourses} />
+              )}
+
+              {activeTab === 'comments' && (
+                <CommentsTab
+                  myReview={myReview}
+                  reviewForm={reviewForm}
+                  isReviewSubmitting={isReviewSubmitting}
+                  onEditReview={handleEditReview}
+                  onSubmitReviewUpdate={handleSubmitReviewUpdate}
+                  onSubmitReviewCreate={handleSubmitReviewCreate}
+                  onReviewRatingChange={(rating) => setReviewForm({ ...reviewForm, rating })}
+                  onReviewCommentChange={(comment) => setReviewForm({ ...reviewForm, comment })}
+                />
+              )}
+
+              {activeTab === 'payments' && <PaymentsTab />}
+
+              {activeTab === 'settings' && (
+                <SettingsTab user={currentUser} isUpdating={isUpdating} onSubmit={handleUpdateProfile} onShowPasswordModal={() => setShowPasswordModal(true)} />
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </main>
+
+      <PasswordModal
+        open={showPasswordModal}
+        isUpdating={isUpdating}
+        passwordData={passwordData}
+        onClose={() => setShowPasswordModal(false)}
+        onSubmit={handleUpdatePassword}
+        onChange={(id, v) => setPasswordData({ ...passwordData, [id]: v })}
+      />
+      <TransactionModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <Footer />
+      </div>
+    </>
+  )
+}
